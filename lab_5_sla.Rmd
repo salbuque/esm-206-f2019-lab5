@@ -1,0 +1,12 @@
+---
+title: "lab_5_simone_albuquerque"
+author: "Simone Albuquerque"
+date: "October 29, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
