@@ -115,4 +115,91 @@ lobster_site <-  lobster_parse_date %>%
 lobster_site
 ```
  
+ If we want to create a summary table that contains statistics other than counts by group, it is easier to use group_by() + n()
+ 
+```{r}
+lobster_summary <- lobster_parse_date %>% 
+  group_by(site) %>% 
+  summarize(
+    mean_size = mean(size_mm, na.rm = TRUE), 
+    sd_size  = sd(size_mm, na.rm = TRUE),
+    lobster_number = n()
+  )
+lobster_summary
+```
+ #### Find Confidence Intervals
+ 
+ Use t.test() function to find confidence intervals (for one sample) and perform t-tests to compare means of two samples 
+ 
+ - NULL hypothesis is that the mean is 0
+```{r}
+ivee_lobster <- lobster_tidy %>% 
+  filter(site == "IVEE") %>% 
+  pull(size_mm)
+
+t.test(ivee_lobster)
+```
+ 
+ #### Two - sample T- test to compare means
+ 
+- Do I think I have enough evidence that these samples were drawn from populations that have different means?
+ - the NULL hypothesis is that the samples are drawn from populations with the same mean
+ 
+ We want to ask: Is there a significanct different in lobster lengths at Naples and Mohawk reefs? 
+ 
+ We've done our necessary exploratory datato determine that a 2-sample t-test for means comparison is appropriate 
+ 
+```{r}
+napl_sample <-  lobster_tidy %>% 
+  filter(site == "NAPL") %>% 
+  pull(size_mm)
+
+mohk_sample <-  lobster_tidy %>% 
+  filter(site == "MOHK") %>% 
+  pull(size_mm)
+
+mohk_napl_ttest <- t.test(mohk_sample, napl_sample)
+
+mohk_napl_ttest
+```
+ 
+- It is so unlikely, based on p-value, that we would have drawn these two samples if they were drawn from pops with the same mean, so the more likely explanation is that they were drawn from populations with different means. .... 
+
+
+##### There is a significant different in lobster lengths between Naples and Mohawk Reef (t(df) = statistic, p<0.001, alpha = 0.05)
+ 
+-  Way more important are the qualitative different between the two means and differences in lobster lengths. The P-value is only interesting in that it leads up to more detailed understanding of data. This is simply a hypothesis test. 
+
+```{r}
+lobster_mn <- lobster_tidy %>% 
+  filter(site %in% c("NAPL", "MOHK"))
+
+mn_ttest2 <-  t.test(size_mm ~ site, data = lobster_mn)
+
+mn_ttest2
+
+mn_ttest2$p.value
+mn_ttest2$statistic
+
+
+# ~ means as a function of 
+```
+
+Here is the p-value: `r mn_ttest2$p.value`
+
+Here is the t-statistic: `r mn_ttest2$statistic`
+
+### Now: a heatmap! 
+
+```{r}
+
+lobster_ys <-  lobster_parse_date %>% 
+  count(obs_year, site)
+
+ggplot(data = lobster_ys, aes(x = obs_year, y = site)) +
+  geom_tile(aes(fill = n))
+```
+
+ 
+ 
  
