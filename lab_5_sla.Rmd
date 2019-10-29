@@ -9,4 +9,110 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+#### Lab 5 Objectives
+- Learn to parse dtes with 'Lubricate'
+- Get counts of observations with count()
+- Uncount() rows
+- One and two-sample t-test
+- Create a heatmap with geom_tile()
 
+```{r, include = FALSE}
+# Read in data and attach packages
+
+library(tidyverse)
+library(janitor)
+library(here)
+
+lobster_abundance <- read_csv(here::here("data", "lobster_abundance.csv"),
+                              na = "-99999") %>%  
+  janitor::clean_names()
+  
+# view(lobster_abundance)
+```
+
+Use tidyr::uncount() function to conver our lobster data from frequency format to case format
+
+```{r}
+lobster_tidy <- lobster_abundance %>% 
+  tidyr::uncount(lobster_count)
+
+# view(lobster_tidy)
+```
+
+#### Exploratory Data Visualization 
+We're only going to consider 'site' as our variable of interest
+
+```{r}
+ggplot(lobster_tidy, aes( x = site, y = size_mm)) +
+         geom_jitter(aes(color = site), 
+                     aplha = 0.5, 
+                     width = 0.2)
+
+# Histogram, one per site
+ggplot(lobster_tidy, aes(x = size_mm)) +
+  geom_histogram(aes(fill = site)) + 
+  facet_wrap(~site, scales = "free")
+# made each graphs scale x,y independent to see trens within each site instead of comparing amongst sites
+
+ggplot(lobster_tidy, aes(sample = size_mm)) + 
+  geom_qq() +
+  facet_wrap(~site)
+
+#facet_wrap(~site) so that I could see if each site followed linear normal trend
+```
+
+#### They look normally distributed size_mm based on site.
+ 
+- Central Limit Theorem tells us: since there are over 30 samples (hundreds), the means will be normally distributed (they would be normally distributed even if the stat_qq didnt show up normalized) and we can conduct a T test. 
+ 
+ - This geom_qq tells us whether we trust the normal distribution of means as an honest representation of data
+ 
+ #### Convert 'date' Column to class 'Date'
+ 
+ We'll use the 'lubridate' package to convert to Date format, and then help us easily parse month & year 
+ 
+```{r}
+lobster_date <- lobster_tidy %>% 
+  mutate(
+    date_new = lubridate::mdy(date)
+  )
+
+# view(lobster_date)
+# class(lobster_date$date_new) to view if read as character or date
+```
+ 
+ Now let's parse year and month using lubridate::month() and lubridate::year():
+ 
+```{r}
+lobster_parse_date <- lobster_date %>% 
+  mutate(
+    obs_month = lubridate::month(date_new, label = TRUE), 
+    obs_year = lubridate::year(date_new)
+    
+  )
+
+view(lobster_parse_date)
+class(lobster_parse_date$obs_month)
+
+```
+ 
+ Now let's fidn counts of observed lobsters based on different hierarchical listings
+ First: let's count lobsters by year and month:
+```{r}
+lobster_ym <-  lobster_parse_date %>% 
+  dplyr::count(obs_year, obs_month)
+
+lobster_ym
+
+lobster_y <-lobster_parse_date %>% 
+  dplyr::count(obs_year)
+
+lobster_y
+
+lobster_site <-  lobster_parse_date %>% 
+  dplyr::count(site)
+
+lobster_site
+```
+ 
+ 
